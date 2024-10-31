@@ -1,0 +1,30 @@
+log.level: debug
+http.port: 8080
+
+token:
+  secret: secret
+  expiration:
+    access: 30m
+    refresh: 168h # 7 days
+
+otp.expiration: 15m
+
+product.recommendation.expiration: 10m
+
+mysql:
+  host: localhost
+  port: 3306
+  user: root
+  password: root
+  database: shop
+  maxIdleConns: 10
+  maxOpenConns: 10
+  maxLifetime: 10
+
+redis:
+  addr: localhost:6379
+  username:
+  password:
+  database: 0
+  maxIdleConns: 10
+  maxOpenConns: 10
