@@ -22,21 +22,21 @@ A simple shop platform backend project. base on clean architecture.
 
 ```bash
 # clone project
-git clone https://github.com/yanunon/shop-api.git
-cd shop-api
+$ git clone https://github.com/yanunon/shop-api.git
+$ cd shop-api
 
 # prepare and edit config.yaml for server run
-cp ./config/config.yaml.example ./config/config.yaml
+$ cp ./config/config.yaml.example ./config/config.yaml
 
 # prepare and edit Makefile.env for database migration
-cp Makefile.env.example Makefile.env
+$ cp Makefile.env.example Makefile.env
 
 ```
 
 #### Start MySQL and Redis (Optional)
 
 ```bash
-docker-compose ./docker-compose-database.yaml up -d
+$ make database.up
 ```
 
 ### _** Choose one of the following options to run the project **_
@@ -47,13 +47,13 @@ docker-compose ./docker-compose-database.yaml up -d
 
   ```bash
   # install dependencies (macOS required)
-  make install
+  $ make install
 
   # run migration
-  make migrate.up
+  $ make migrate.up
 
   # run server
-  make run
+  $ make run
   ```
 
 - ### Docker
@@ -62,10 +62,10 @@ docker-compose ./docker-compose-database.yaml up -d
 
   ```bash
   # build docker image
-  make docker.build
+  $ make docker.build
 
   # run docker container
-  make docker.run
+  $ make docker.run
   ```
 
 - ### Docker Compose
@@ -74,13 +74,13 @@ docker-compose ./docker-compose-database.yaml up -d
 
   ```bash
   # build docker image
-  make docker.build
+  $ make docker.build
 
   # run docker compose
-  docker-compose up
+  $ make compose.up
 
   # run migration
-  make migrate.up
+  $ make migrate.up
   ```
 
 ## API

@@ -6,7 +6,11 @@ run:
 test:
 	go test -count=1 -cover ./...
 
-docker.build:	## Build backend Docker image
+############
+#  docker  #
+############
+
+docker.build:	
 	docker build . \
 		-t shop-api:latest
 
@@ -14,6 +18,26 @@ docker.run:
 	docker run -d \
 	-p 8080:8080 \
 	--name shop-api shop-api
+
+docker.stop:
+	docker stop shop-api
+
+####################
+#  docker-compose  #
+####################
+
+compose.up:
+	docker-compose up -d
+
+compose.down:
+	docker-compose down
+
+database.up:
+	docker-compose -f docker-compose-database.yaml up -d
+
+database.down:
+	docker-compose -f docker-compose-database.yaml down
+
 
 ##########
 #  sqlc  #
@@ -26,6 +50,11 @@ install:
 
 sqlc.gen:
 	sqlc -f ./database/sqlc/sqlc.yaml generate
+
+
+###############
+#  migration  #
+###############
 
 migrate.new:
 	goose sqlite -dir=${MYSQL_SQL_PATH} . create . sql
