@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestVerifyEmailFormat(t *testing.T) {
+func TestEmailFormatValidator(t *testing.T) {
 	testCases := []struct {
 		desc  string
 		email string
@@ -41,7 +41,7 @@ func TestVerifyEmailFormat(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
-			result := new(authUsecase).verifyEmailFormat(tc.email)
+			result := emailFormatValidator.MatchString(tc.email)
 			assert.Equal(t, tc.want, result)
 		})
 	}

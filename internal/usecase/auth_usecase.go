@@ -40,7 +40,7 @@ func NewAuthUsecase(
 }
 
 func (use *authUsecase) Register(ctx context.Context, email, password, code string) error {
-	if !use.verifyEmailFormat(email) {
+	if !emailFormatValidator.MatchString(email) {
 		return errors.Errorf("mismatch email format (%s), err: %+v", email, usecase.ErrInvalidEmailFormat)
 	}
 
@@ -77,10 +77,6 @@ func (use *authUsecase) Register(ctx context.Context, email, password, code stri
 	}
 
 	return nil
-}
-
-func (authUsecase) verifyEmailFormat(email string) bool {
-	return emailFormatValidator.MatchString(email)
 }
 
 func (authUsecase) verifyPasswordFormat(password string) bool {

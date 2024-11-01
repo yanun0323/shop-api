@@ -9,6 +9,6 @@
 go.work
 
 # Others
-*.yaml
+config.yaml
 *.build
 *.env

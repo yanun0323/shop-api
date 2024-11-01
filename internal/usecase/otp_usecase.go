@@ -31,6 +31,10 @@ func NewOTPUsecase(otpRepo repository.OTPRepository, notifyRepo repository.Notif
 }
 
 func (use *otpUsecase) SendEmail(ctx context.Context, email string) error {
+	if !emailFormatValidator.MatchString(email) {
+		return errors.Errorf("invalid email format, err: %+v", usecase.ErrInvalidEmailFormat)
+	}
+
 	code := use.generateOTPCode(_verifyCodeCount)
 	if err := use.otpRepo.Store(ctx, email, code); err != nil {
 		return errors.Errorf("store otp: %+v", err)

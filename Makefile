@@ -3,7 +3,10 @@
 run:
 	go run main.go
 
-build:	## Build backend Docker image
+test:
+	go test -count=1 -cover ./...
+
+docker.build:	## Build backend Docker image
 	docker build . \
 		-t shop-api:latest
 
@@ -17,6 +20,9 @@ docker.run:
 ##########
 
 include Makefile.env
+
+install:
+	brew install sqlc goose docker-compose
 
 sqlc.gen:
 	sqlc -f ./database/sqlc/sqlc.yaml generate

@@ -1,0 +1,25 @@
+services:
+  shop-api:
+    restart: always
+    image: shop-api
+    deploy:
+      resources:
+        limits:
+          cpus: "0.2"
+          memory: 256M
+        reservations:
+          cpus: "0.2"
+          memory: 256M
+    ports:
+      - "8080:8080"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis-standalone:
+        condition: service_healthy
+    networks:
+      - local
+
+networks:
+  local:
+    driver: bridge

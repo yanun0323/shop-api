@@ -1,0 +1,29 @@
+version: "2"
+sql:
+  - engine: "mysql"
+    queries: "./query"
+    schema: "../migration"
+    database:
+      managed: true
+      uri: mysql://${DB_USER}:${DB_PASSWORD}@tcp(${DB_HOST}:${DB_PORT})/$(DB_NAME)?charset=utf8&parseTime=True&loc=Local
+    gen:
+      go:
+        package: "query"
+        sql_package: "database/sql"
+        out: "../../internal/repository/query"
+        emit_json_tags: true
+        overrides:
+          - db_type: "bigint"
+            nullable: true
+            go_type:
+              import: "github.com/guregu/null/v5"
+              type: "Int64"
+          - db_type: "int"
+            nullable: false
+            go_type:
+              type: "int"
+          - db_type: "decimal"
+            nullable: false
+            go_type:
+              import: "github.com/shopspring/decimal"
+              type: "Decimal"
