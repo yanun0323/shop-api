@@ -125,7 +125,3 @@ $ make database.up
 │   └── helper          # helper functions
 .
 ```
-
-```
-
-```
