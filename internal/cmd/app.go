@@ -11,7 +11,9 @@ import (
 )
 
 func Run() {
-	logs.SetDefaultLevel(logs.NewLevel(config.Load().Log.Level))
+	conf := config.Load()
+	logs.SetDefaultLevel(logs.NewLevel(conf.Log.Level))
+	logs.Debugf("config: %+v", conf)
 
 	fx.New(
 		injectInfra(),

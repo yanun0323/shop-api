@@ -7,12 +7,17 @@ services:
       - "3306:3306"
     environment:
       - MYSQL_ROOT_PASSWORD=root
-      - MYSQL_DATABASE=shop-api
       - MYSQL_USER=test
-      - MYSQL_PASSWORD=root
+      - MYSQL_PASSWORD=test
+      - MYSQL_DATABASE=shop-api
     volumes:
       - "${HOME}/docker-compose/data/mysql/data:/var/lib/mysql"
       - "${HOME}/docker-compose/data/mysql/config:/etc/mysql/conf.d"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     deploy:
       resources:
         limits:
@@ -21,18 +26,16 @@ services:
         reservations:
           cpus: "0.2"
           memory: 256M
-    networks:
-      - local
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
 
   redis-standalone:
     restart: always
     image: redis:7.0
     container_name: redis-standalone
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     deploy:
       resources:
         limits:
@@ -43,13 +46,3 @@ services:
           memory: 32M
     ports:
       - "6379:6379"
-    networks:
-      - local
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-networks:
-  local:
-    driver: bridge

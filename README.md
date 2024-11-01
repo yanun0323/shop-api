@@ -40,6 +40,7 @@ $ cp Makefile.env.example Makefile.env
 $ make install
 
 $ make database.up
+# after run this command, should wait about 5 minutes before proceeding to the next step
 ```
 
 ### _** Choose one of the following options to run the project **_
@@ -81,9 +82,6 @@ $ make database.up
 
   # run docker compose
   $ make compose.up
-
-  # run migration
-  $ make migrate.up
   ```
 
 ## API

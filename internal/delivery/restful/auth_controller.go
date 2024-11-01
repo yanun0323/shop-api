@@ -12,11 +12,13 @@ import (
 
 type AuthController struct {
 	authUsecase usecase.AuthUsecase
+	optUsecase  usecase.OTPUsecase
 }
 
-func NewUserController(auth usecase.AuthUsecase) AuthController {
+func NewUserController(auth usecase.AuthUsecase, otp usecase.OTPUsecase) AuthController {
 	return AuthController{
 		authUsecase: auth,
+		optUsecase:  otp,
 	}
 }
 
@@ -49,7 +51,7 @@ func (ctr *AuthController) Register(c echo.Context) error {
 	)
 }
 
-func (ctr *AuthController) SendVerifyCode(c echo.Context) error {
+func (ctr *AuthController) SendOTP(c echo.Context) error {
 	req := struct {
 		Email string `json:"email"`
 	}{}
@@ -80,6 +82,41 @@ func (ctr *AuthController) SendVerifyCode(c echo.Context) error {
 	return c.JSON(
 		http.StatusOK,
 		response.Msg("send verify code success"),
+	)
+}
+
+func (ctr *AuthController) VerifyOTP(c echo.Context) error {
+	req := struct {
+		Email string `json:"email"`
+		Code  int    `json:"code"`
+	}{}
+
+	if err := c.Bind(&req); err != nil {
+		return c.JSON(
+			http.StatusBadRequest,
+			response.Err(err, "verify otp", "request: %+v", req),
+		)
+	}
+
+	ctx := c.Request().Context()
+	ok, err := ctr.optUsecase.VerifyEmail(ctx, req.Email, strconv.Itoa(req.Code))
+	if err != nil {
+		return c.JSON(
+			http.StatusInternalServerError,
+			response.Err(err, "verify otp", "request: %+v", req),
+		)
+	}
+
+	if !ok {
+		return c.JSON(
+			http.StatusBadRequest,
+			response.MsgErr("verify otp", "verify code mismatch"),
+		)
+	}
+
+	return c.JSON(
+		http.StatusOK,
+		response.Msg("verify otp success"),
 	)
 }
 

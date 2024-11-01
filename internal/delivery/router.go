@@ -34,7 +34,8 @@ func RegisterRouters(ctx context.Context, ctr RegisterRoutersParam) *echo.Echo {
 	login := v1.Group("", middleware.Token(ctr.TokenUsecase))
 
 	public.POST("/auth", ctr.Auth.Register)
-	public.POST("/auth/otp", ctr.Auth.SendVerifyCode)
+	public.POST("/auth/otp", ctr.Auth.SendOTP)
+	public.POST("/auth/otp/verification", ctr.Auth.VerifyOTP)
 	public.POST("/auth/token", ctr.Auth.Login)
 
 	login.PUT("/auth/token", ctr.Auth.RefreshToken)

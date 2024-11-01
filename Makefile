@@ -15,9 +15,10 @@ docker.build:
 		-t shop-api:latest
 
 docker.run:
+	docker rm -f shop-api;\
 	docker run -d \
-	-p 8080:8080 \
-	--name shop-api shop-api
+	--network host \
+	--name shop-api shop-api 
 
 docker.stop:
 	docker stop shop-api
@@ -27,13 +28,13 @@ docker.stop:
 ####################
 
 compose.up:
-	docker-compose up -d
+	docker-compose -p shop-api up
 
 compose.down:
 	docker-compose down
 
 database.up:
-	docker-compose -f docker-compose-database.yaml up -d
+	docker-compose -f docker-compose-database.yaml -p database up -d
 
 database.down:
 	docker-compose -f docker-compose-database.yaml down

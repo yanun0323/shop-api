@@ -15,7 +15,7 @@ RUN apk add build-base
 RUN go build -o shop-api main.go
 
 # final stage
-FROM alpine:3.18
+FROM alpine:3.20
 
 # install timezone data
 RUN apk add --no-cache tzdata
@@ -25,7 +25,7 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 COPY --from=build /go/build/shop-api /var/application/shop-api
 COPY --from=build /go/build/config.yaml /var/application/config.yaml
 
-EXPOSE 8001
+EXPOSE 8080
 
 WORKDIR /var/application
 CMD [ "./shop-api" ]

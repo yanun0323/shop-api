@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	if err := config.Init("config", "./config", "../config", "../../config"); err != nil {
+	if err := config.Init("config","././config", "./config", "../config", "../../config"); err != nil {
 		logs.Fatalf("init config: %v", err)
 	}
 
