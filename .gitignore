@@ -11,3 +11,4 @@ go.work
 # Others
 *.yaml
 *.build
+*.env
