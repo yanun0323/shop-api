@@ -16,7 +16,7 @@ mysql:
   port: 3306
   user: root
   password: root
-  database: shop
+  database: shop-api
   maxIdleConns: 10
   maxOpenConns: 10
   maxLifetime: 10
