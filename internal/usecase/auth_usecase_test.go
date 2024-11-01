@@ -6,6 +6,47 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestVerifyEmailFormat(t *testing.T) {
+	testCases := []struct {
+		desc  string
+		email string
+		want  bool
+	}{
+		{
+			desc:  "pass domain",
+			email: "test@test-123.com",
+			want:  true,
+		},
+		{
+			desc:  "pass username",
+			email: "test.user-name+tag@test.com",
+			want:  true,
+		},
+		{
+			desc:  "empty username",
+			email: "@test.com",
+			want:  false,
+		},
+		{
+			desc:  "empty domain",
+			email: "test.user-name+tag",
+			want:  false,
+		},
+		{
+			desc:  "short domain",
+			email: "test@test",
+			want:  false,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			result := new(authUsecase).verifyEmailFormat(tc.email)
+			assert.Equal(t, tc.want, result)
+		})
+	}
+}
+
 func TestVerifyPasswordFormat(t *testing.T) {
 	testCases := []struct {
 		desc string
