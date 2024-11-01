@@ -36,6 +36,9 @@ $ cp Makefile.env.example Makefile.env
 #### Start MySQL and Redis (Optional)
 
 ```bash
+# install dependencies (macOS required)
+$ make install
+
 $ make database.up
 ```
 

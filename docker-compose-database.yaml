@@ -7,9 +7,9 @@ services:
       - "3306:3306"
     environment:
       - MYSQL_ROOT_PASSWORD=root
-      - MYSQL_DATABASE=test
+      - MYSQL_DATABASE=shop-api
       - MYSQL_USER=test
-      - MYSQL_PASSWORD=shot-api
+      - MYSQL_PASSWORD=root
     volumes:
       - "${HOME}/docker-compose/data/mysql/data:/var/lib/mysql"
       - "${HOME}/docker-compose/data/mysql/config:/etc/mysql/conf.d"
