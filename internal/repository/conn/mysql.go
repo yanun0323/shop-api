@@ -18,9 +18,7 @@ func NewGormDB(ctx context.Context, conf config.Config) (*gorm.DB, error) {
 		conf.MySQL.Port,
 		conf.MySQL.Database,
 	)
-	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
-		TranslateError: true,
-	})
+	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	if err != nil {
 		return nil, errors.Errorf("connect gorm, err: %+v", err)
 	}

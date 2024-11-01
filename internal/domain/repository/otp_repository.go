@@ -6,4 +6,5 @@ import "context"
 type OTPRepository interface {
 	Store(ctx context.Context, email string, code string) error
 	Get(ctx context.Context, email string) (string, error)
+	Delete(ctx context.Context, email string) error
 }

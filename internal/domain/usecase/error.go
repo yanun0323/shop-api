@@ -25,12 +25,13 @@ func ue(code int, text string) *UsecaseError {
 }
 
 var (
-	ErrInternal = ue(999999, "internal error")
-
-	ErrNotFound               = ue(000001, "not found")
-	ErrPasswordFormatMismatch = ue(000002, "password format mismatch")
-	ErrInvalidEmail           = ue(000003, "invalid email")
-	ErrMismatchPassword       = ue(000004, "mismatch password")
-	ErrTokenExpired           = ue(000005, "token expired")
-	ErrInvalidToken           = ue(000006, "invalid token")
+	ErrNil                   = UsecaseError{200, nil}
+	ErrInternal              = ue(999999, "internal error")
+	ErrNotFound              = ue(000001, "not found")
+	ErrInvalidEmailFormat    = ue(000002, "invalid email format")
+	ErrInvalidPasswordFormat = ue(000003, "invalid password format")
+	ErrInvalidEmail          = ue(000004, "invalid email")
+	ErrMismatchPassword      = ue(000005, "mismatch password")
+	ErrTokenExpired          = ue(000006, "token expired")
+	ErrInvalidToken          = ue(000007, "invalid token")
 )

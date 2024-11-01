@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS `product` (
   `category_id` bigint NOT NULL,
   `price` decimal(10, 2) NOT NULL,
   `rank` int NOT NULL COMMENT '推薦排序',
-  `created_at` bigint NOT NULL,
+  `created_at` bigint NOT NULL DEFAULT (UNIX_TIMESTAMP()),
   `updated_at` bigint NULL,
   PRIMARY KEY (`id`),
   INDEX `index_category_id_rank` (`category_id`, `rank`) COMMENT '使用者推薦使用'

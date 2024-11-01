@@ -21,7 +21,7 @@ func NewNotificationRepository(rdb *redis.Client) repository.NotificationReposit
 func (repo *notificationRepository) SendEmail(email string, content entity.Notification) error {
 	// - check rate limit from redis
 	// - send email
-	logs.Printf("send email: %s", email)
+	logs.Debugf("send email:\n<receiver> %s\n<subject> %s\n<body> %s", email, content.Subject, content.Body)
 	// - update rate limit
 	return nil
 }
@@ -29,7 +29,7 @@ func (repo *notificationRepository) SendEmail(email string, content entity.Notif
 func (repo *notificationRepository) SendSMS(countryCode, phone string, content entity.Notification) error {
 	// - check rate limit from redis
 	// - send SMS
-	logs.Printf("send sms: (%s)%s", countryCode, phone)
+	logs.Debugf("send sms: <receiver> (%s)%s\n<subject> %s\n<body> %s", countryCode, phone, content.Subject, content.Body)
 	// - update rate limit
 	return nil
 }

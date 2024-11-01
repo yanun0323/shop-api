@@ -6,28 +6,27 @@ import (
 	"main/config"
 	"main/internal/domain/entity"
 	"main/internal/domain/repository"
-	"main/internal/repository/model"
+	"main/internal/repository/conn"
+	"main/internal/repository/query"
 	"sync"
 	"time"
 
 	"github.com/pkg/errors"
-	"github.com/yanun0323/pkg/logs"
 
 	"github.com/redis/go-redis/v9"
-	"gorm.io/gorm"
 )
 
 type productRepository struct {
-	db  *gorm.DB
+	db  *query.Queries
 	rdb *redis.Client
 
 	recommendationExpiration       time.Duration
 	categoryProductCacheMutexTable sync.Map
 }
 
-func NewProductRepository(conf config.Config, db *gorm.DB, rdb *redis.Client) repository.ProductRepository {
+func NewProductRepository(conf config.Config, db *query.Queries, rdb *redis.Client) repository.ProductRepository {
 	return &productRepository{
-		db:                             db.Debug(),
+		db:                             db,
 		rdb:                            rdb,
 		recommendationExpiration:       conf.Product.Recommendation.Expiration,
 		categoryProductCacheMutexTable: sync.Map{},
@@ -47,24 +46,17 @@ func (repo *productRepository) getCategoryProductList(ctx context.Context, categ
 	start, end := int64(offset), int64(offset+limit-1)
 	result, count, err := repo.loadCategoryProductListFromCache(ctx, category, start, end)
 	if err == nil {
-		logs.Info("Miss cache")
 		return result, count, nil
 	}
-
-	logs.Info("Hit cache")
 
 	if !errors.Is(err, repository.ErrNotFound) {
 		return nil, 0, errors.Errorf("load product list from cache, err: %+v", err)
 	}
 
-	logs.Info("Start Lock")
-
 	mu, _ := repo.categoryProductCacheMutexTable.LoadOrStore(category, &sync.Mutex{})
 	lock := mu.(*sync.Mutex)
 	lock.Lock()
 	defer lock.Unlock()
-
-	logs.Info("End Lock")
 
 	// reload list from cache again after get lock
 
@@ -107,7 +99,7 @@ func (repo *productRepository) loadCategoryProductListFromCache(ctx context.Cont
 	key := repo.categoryProductListCacheKey(category)
 	count, err := repo.rdb.LLen(ctx, key).Result()
 	if err != nil {
-		if errors.Is(err, redis.Nil) {
+		if conn.IsNotFoundError(err) {
 			return []*entity.Product{}, 0, repository.ErrNotFound
 		}
 
@@ -116,7 +108,7 @@ func (repo *productRepository) loadCategoryProductListFromCache(ctx context.Cont
 
 	var products []*entity.Product
 	if err := repo.rdb.LRange(ctx, key, start, end).ScanSlice(&products); err != nil {
-		if errors.Is(err, redis.Nil) {
+		if conn.IsNotFoundError(err) {
 			return []*entity.Product{}, 0, repository.ErrNotFound
 		}
 
@@ -141,6 +133,11 @@ func (repo *productRepository) cacheCategoryProductList(ctx context.Context, cat
 			}
 		}
 
+		_, err := tx.Expire(ctx, key, repo.recommendationExpiration).Result()
+		if err != nil {
+			return errors.Errorf("set product list to cache, err: %+v", err)
+		}
+
 		return nil
 	})
 	if err != nil {
@@ -151,14 +148,9 @@ func (repo *productRepository) cacheCategoryProductList(ctx context.Context, cat
 }
 
 func (repo *productRepository) getCategoryProductListFromMySQL(ctx context.Context, category entity.ProductCategory) ([]*entity.Product, error) {
-	var products []*model.Product
-
-	err := repo.db.WithContext(ctx).Table(model.Product{}.TableName()).
-		Where("category_id = ?", category).
-		Order("`rank` DESC").
-		Find(&products).Error
+	products, err := repo.db.ListProducts(ctx, int64(category))
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
+		if conn.IsNotFoundError(err) {
 			return []*entity.Product{}, nil
 		}
 
@@ -167,7 +159,16 @@ func (repo *productRepository) getCategoryProductListFromMySQL(ctx context.Conte
 
 	result := make([]*entity.Product, 0, len(products))
 	for _, p := range products {
-		result = append(result, p.ToEntity())
+		result = append(result, &entity.Product{
+			ID:          p.ID,
+			Name:        p.Name,
+			Description: p.Description,
+			CategoryID:  entity.ProductCategory(p.CategoryID),
+			Price:       p.Price,
+			Rank:        p.Rank,
+			CreatedAt:   p.CreatedAt,
+			UpdatedAt:   p.UpdatedAt.ValueOrZero(),
+		})
 	}
 
 	return result, nil

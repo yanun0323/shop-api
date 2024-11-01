@@ -9,9 +9,9 @@ import (
 	"math"
 	"math/rand"
 	"strconv"
+	"strings"
 
 	"github.com/pkg/errors"
-	"github.com/yanun0323/pkg/logs"
 )
 
 const (
@@ -31,7 +31,7 @@ func NewOTPUsecase(otpRepo repository.OTPRepository, notifyRepo repository.Notif
 }
 
 func (use *otpUsecase) SendEmail(ctx context.Context, email string) error {
-	code := use.generateOTPCode()
+	code := use.generateOTPCode(_verifyCodeCount)
 	if err := use.otpRepo.Store(ctx, email, code); err != nil {
 		return errors.Errorf("store otp: %+v", err)
 	}
@@ -39,12 +39,10 @@ func (use *otpUsecase) SendEmail(ctx context.Context, email string) error {
 	if err := use.notifyRepo.SendEmail(email, entity.Notification{
 		Type:    entity.NotifyTypeRegisterOtp,
 		Subject: "OTP",
-		Body:    fmt.Sprintf("Your OTP code is %s", code),
+		Body:    fmt.Sprintf("Your OTP code is %s", use.fillUpOTPCode(code, _verifyCodeCount)),
 	}); err != nil {
 		return errors.Errorf("send email: %+v", err)
 	}
-
-	logs.Debugf("Send OTP code: %s", code)
 
 	return nil
 }
@@ -59,12 +57,26 @@ func (use *otpUsecase) VerifyEmail(ctx context.Context, email, code string) (boo
 		return false, errors.Errorf("get otp: %+v", err)
 	}
 
-	logs.Debugf("Verify OTP code: %s", otp)
+	if otp != code {
+		return false, nil
+	}
 
-	return otp == code, nil
+	if err := use.otpRepo.Delete(ctx, email); err != nil {
+		return false, errors.Errorf("delete otp: %+v", err)
+	}
+
+	return true, nil
 }
 
-func (otpUsecase) generateOTPCode() string {
-	limit := int(math.Pow10(_verifyCodeCount)) - 1
+func (otpUsecase) generateOTPCode(length int) string {
+	limit := int(math.Pow10(length)) - 1
 	return strconv.Itoa(rand.Intn(limit))
+}
+
+func (otpUsecase) fillUpOTPCode(code string, length int) string {
+	if len(code) >= length {
+		return code
+	}
+
+	return strings.Repeat("0", length-len(code)) + code
 }

@@ -25,7 +25,6 @@ func RegisterRouters(ctx context.Context, ctr RegisterRoutersParam) *echo.Echo {
 
 	v1 := server.Group("/api/v1")
 	v1.Use(
-		echomiddleware.Logger(),
 		echomiddleware.Recover(),
 		echomiddleware.CORS(),
 		middleware.RateLimiter(),

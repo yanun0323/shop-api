@@ -5,22 +5,21 @@ import (
 	"fmt"
 	"main/internal/domain/entity"
 	"main/internal/domain/repository"
-	"main/internal/repository/model"
+	"main/internal/repository/conn"
+	"main/internal/repository/query"
 	"time"
 
 	"github.com/pkg/errors"
 
 	"github.com/redis/go-redis/v9"
-	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
 )
 
 type tokenRepository struct {
-	db  *gorm.DB
+	db  *query.Queries
 	rdb *redis.Client
 }
 
-func NewTokenRepository(db *gorm.DB, rdb *redis.Client) repository.TokenRepository {
+func NewTokenRepository(db *query.Queries, rdb *redis.Client) repository.TokenRepository {
 	return &tokenRepository{
 		db:  db,
 		rdb: rdb,
@@ -31,12 +30,12 @@ func (tokenRepository) cacheKey(userID int64, deviceID string) string {
 	return fmt.Sprintf("ACCESS:TOKEN:%d:%s", userID, deviceID)
 }
 
-func (repo *tokenRepository) Exist(ctx context.Context, query repository.TokenQuery) (bool, error) {
-	if query.TokenType == entity.TokenTypeAccessToken {
-		key := repo.cacheKey(query.UserID, query.DeviceID)
+func (repo *tokenRepository) Exist(ctx context.Context, q repository.TokenQuery) (bool, error) {
+	if q.TokenType == entity.TokenTypeAccessToken {
+		key := repo.cacheKey(q.UserID, q.DeviceID)
 		result, err := repo.rdb.Exists(ctx, key).Result()
 		if err != nil {
-			if errors.Is(err, redis.Nil) {
+			if conn.IsNotFoundError(err) {
 				return false, nil
 			}
 
@@ -46,12 +45,13 @@ func (repo *tokenRepository) Exist(ctx context.Context, query repository.TokenQu
 		return result != 0, nil
 	}
 
-	var count int64
-	err := repo.db.WithContext(ctx).Table(model.Token{}.TableName()).
-		Where("user_id = ? AND device_id = ? AND expired_at > ?", query.UserID, query.DeviceID, time.Now().Unix()).
-		Count(&count).Error
+	count, err := repo.db.CountToken(ctx, query.CountTokenParams{
+		UserID:    q.UserID,
+		DeviceID:  q.DeviceID,
+		ExpiredAt: time.Now().Unix(),
+	})
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
+		if conn.IsNotFoundError(err) {
 			return false, nil
 		}
 
@@ -61,12 +61,12 @@ func (repo *tokenRepository) Exist(ctx context.Context, query repository.TokenQu
 	return count != 0, nil
 }
 
-func (repo *tokenRepository) Get(ctx context.Context, query repository.TokenQuery) (string, error) {
-	if query.TokenType == entity.TokenTypeAccessToken {
-		key := repo.cacheKey(query.UserID, query.DeviceID)
+func (repo *tokenRepository) Get(ctx context.Context, q repository.TokenQuery) (string, error) {
+	if q.TokenType == entity.TokenTypeAccessToken {
+		key := repo.cacheKey(q.UserID, q.DeviceID)
 		result, err := repo.rdb.Get(ctx, key).Result()
 		if err != nil {
-			if errors.Is(err, redis.Nil) {
+			if conn.IsNotFoundError(err) {
 				return "", errors.Errorf("redis get, err: %+v", repository.ErrNotFound)
 			}
 
@@ -76,12 +76,13 @@ func (repo *tokenRepository) Get(ctx context.Context, query repository.TokenQuer
 		return result, nil
 	}
 
-	var token model.Token
-	err := repo.db.WithContext(ctx).Table(token.TableName()).
-		Where("user_id = ? AND device_id = ? AND expired_at > ?", query.UserID, query.DeviceID, time.Now().Unix()).
-		Take(&token).Error
+	token, err := repo.db.GetToken(ctx, query.GetTokenParams{
+		UserID:    q.UserID,
+		DeviceID:  q.DeviceID,
+		ExpiredAt: time.Now().Unix(),
+	})
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
+		if conn.IsNotFoundError(err) {
 			return "", errors.Errorf("get token, err: %+v", repository.ErrNotFound)
 		}
 
@@ -92,12 +93,12 @@ func (repo *tokenRepository) Get(ctx context.Context, query repository.TokenQuer
 
 }
 
-func (repo *tokenRepository) Create(ctx context.Context, query repository.CreateTokenQuery) error {
-	if query.TokenType == entity.TokenTypeAccessToken {
-		key := repo.cacheKey(query.UserID, query.DeviceID)
-		expiration := time.Until(time.Unix(query.ExpiredAt, 0))
+func (repo *tokenRepository) Create(ctx context.Context, q repository.CreateTokenQuery) error {
+	if q.TokenType == entity.TokenTypeAccessToken {
+		key := repo.cacheKey(q.UserID, q.DeviceID)
+		expiration := time.Until(time.Unix(q.ExpiredAt, 0))
 
-		_, err := repo.rdb.Set(ctx, key, query.Token, expiration).Result()
+		_, err := repo.rdb.Set(ctx, key, q.Token, expiration).Result()
 		if err != nil {
 			return errors.Errorf("set token, err: %+v", err)
 		}
@@ -105,19 +106,14 @@ func (repo *tokenRepository) Create(ctx context.Context, query repository.Create
 		return nil
 	}
 
-	token := model.Token{
-		UserID:       query.UserID,
-		DeviceID:     query.DeviceID,
-		RefreshToken: query.Token,
-		ExpiredAt:    query.ExpiredAt,
-	}
-	err := repo.db.WithContext(ctx).Table(model.Token{}.TableName()).
-		Clauses(clause.OnConflict{
-			Columns:   []clause.Column{{Name: "user_id"}, {Name: "device_id"}},
-			UpdateAll: true,
-		}).Create(&token).Error
+	err := repo.db.CreateToken(ctx, query.CreateTokenParams{
+		UserID:       q.UserID,
+		DeviceID:     q.DeviceID,
+		RefreshToken: q.Token,
+		ExpiredAt:    q.ExpiredAt,
+	})
 	if err != nil {
-		if errors.Is(err, gorm.ErrDuplicatedKey) {
+		if conn.IsDuplicateKeyError(err) {
 			return errors.Errorf("create token, err: %+v", repository.ErrDuplicateKey)
 		}
 
@@ -131,18 +127,18 @@ func (repo *tokenRepository) Delete(ctx context.Context, userID int64, deviceID 
 
 	_, err := repo.rdb.Del(ctx, repo.cacheKey(userID, deviceID)).Result()
 	if err != nil {
-		if errors.Is(err, redis.Nil) {
+		if conn.IsNotFoundError(err) {
 			return nil
 		}
 
 		return errors.Errorf("delete token, err: %+v", err)
 	}
 
-	err = repo.db.WithContext(ctx).Table(model.Token{}.TableName()).
-		Where("user_id = ? AND device_id = ?", userID, deviceID).
-		Delete(&model.Token{}).Error
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
+	if err := repo.db.DeleteToken(ctx, query.DeleteTokenParams{
+		UserID:   userID,
+		DeviceID: deviceID,
+	}); err != nil {
+		if conn.IsNotFoundError(err) {
 			return nil
 		}
 

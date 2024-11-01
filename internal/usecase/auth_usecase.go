@@ -13,6 +13,14 @@ import (
 	"github.com/pkg/errors"
 )
 
+var (
+	emailFormatValidator       = regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`)
+	passwordUpperCastValidator = regexp.MustCompile(`.*[A-Z].*`)
+	passwordLowerCastValidator = regexp.MustCompile(`.*[a-z].*`)
+	passwordLengthValidator    = regexp.MustCompile(".*[()[\\]{}<>+\\-*/?,.:;\"'_\\\\|~`!@#$%^&=].*")
+	passwordSpecialValidator   = regexp.MustCompile(`^.{6,16}$`)
+)
+
 type authUsecase struct {
 	tokenUse usecase.TokenUsecase
 	optUse   usecase.OTPUsecase
@@ -32,8 +40,12 @@ func NewAuthUsecase(
 }
 
 func (use *authUsecase) Register(ctx context.Context, email, password, code string) error {
+	if !use.verifyEmailFormat(email) {
+		return errors.Errorf("mismatch email format (%s), err: %+v", email, usecase.ErrInvalidEmailFormat)
+	}
+
 	if !use.verifyPasswordFormat(password) {
-		return errors.Errorf("mismatch password format (%s)", password)
+		return errors.Errorf("mismatch password format (%s), err: %+v", password, usecase.ErrInvalidPasswordFormat)
 	}
 
 	pass, err := use.optUse.VerifyEmail(ctx, email, code)
@@ -67,12 +79,9 @@ func (use *authUsecase) Register(ctx context.Context, email, password, code stri
 	return nil
 }
 
-var (
-	passwordUpperCastValidator = regexp.MustCompile(".*[A-Z].*")
-	passwordLowerCastValidator = regexp.MustCompile(".*[a-z].*")
-	passwordLengthValidator    = regexp.MustCompile(".*[()[\\]{}<>+\\-*/?,.:;\"'_\\\\|~`!@#$%^&=].*")
-	passwordSpecialValidator   = regexp.MustCompile("^.{6,16}$")
-)
+func (authUsecase) verifyEmailFormat(email string) bool {
+	return emailFormatValidator.MatchString(email)
+}
 
 func (authUsecase) verifyPasswordFormat(password string) bool {
 	return passwordUpperCastValidator.MatchString(password) &&

@@ -18,6 +18,7 @@ func injectInfra() fx.Option {
 		config.Load,
 		conn.NewGormDB,
 		conn.NewRedisClient,
+		conn.NewQueries,
 	)
 }
 

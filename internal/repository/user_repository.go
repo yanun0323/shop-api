@@ -5,28 +5,24 @@ import (
 
 	"main/internal/domain/entity"
 	"main/internal/domain/repository"
-	"main/internal/repository/model"
+	"main/internal/repository/conn"
+	"main/internal/repository/query"
 
 	"github.com/pkg/errors"
-	"gorm.io/gorm"
 )
 
 type userRepository struct {
-	db *gorm.DB
+	db *query.Queries
 }
 
-func NewUserRepository(db *gorm.DB) repository.UserRepository {
+func NewUserRepository(db *query.Queries) repository.UserRepository {
 	return &userRepository{
 		db: db,
 	}
 }
 
 func (repo *userRepository) Exist(ctx context.Context, email string) (bool, error) {
-	var count int64
-
-	err := repo.db.WithContext(ctx).Table(model.User{}.TableName()).
-		Where("email = ?", email).
-		Count(&count).Error
+	count, err := repo.db.CountUser(ctx, email)
 	if err != nil {
 		return false, errors.Errorf("count email, err: %+v", err)
 	}
@@ -35,62 +31,47 @@ func (repo *userRepository) Exist(ctx context.Context, email string) (bool, erro
 }
 
 func (repo *userRepository) Create(ctx context.Context, user *entity.User) error {
-	u := model.NewUser(user)
-
-	err := repo.db.WithContext(ctx).Create(u).Error
+	id, err := repo.db.CreateUser(ctx, query.CreateUserParams{
+		Name:     user.Name,
+		Email:    user.Email,
+		Password: user.Password,
+	})
 	if err != nil {
-		if errors.Is(err, gorm.ErrDuplicatedKey) {
+		if conn.IsDuplicateKeyError(err) {
 			return errors.Errorf("create user, err: %+v", repository.ErrDuplicateKey)
 		}
 
 		return errors.Errorf("create user, err: %+v", err)
 	}
 
+	user.ID = id
+
 	return nil
 }
 
 func (repo *userRepository) Get(ctx context.Context, opt repository.GetUserOption) (*entity.User, error) {
-	var user model.User
-
-	err := repo.db.WithContext(ctx).Table(user.TableName()).
-		Scopes(repo.getUserOptionScope(opt)...).
-		Take(&user).Error
+	user, err := repo.db.GetUserByEmail(ctx, opt.Email)
 	if err != nil {
-		if errors.Is(err, gorm.ErrDuplicatedKey) {
-			return nil, errors.Errorf("get user, err: %+v", repository.ErrDuplicateKey)
+		if conn.IsNotFoundError(err) {
+			return nil, errors.Errorf("get user, err: %+v", repository.ErrNotFound)
 		}
 
 		return nil, errors.Errorf("get user, err: %+v", err)
 	}
 
-	return user.ToEntity(), nil
+	return &entity.User{
+		ID:        user.ID,
+		Name:      user.Name,
+		Email:     user.Email,
+		Password:  user.Password,
+		CreatedAt: user.CreatedAt,
+	}, nil
 }
 
-func (userRepository) getUserOptionScope(opt repository.GetUserOption) []func(*gorm.DB) *gorm.DB {
-	return []func(*gorm.DB) *gorm.DB{
-		func(d *gorm.DB) *gorm.DB {
-			if opt.ID != 0 {
-				return d.Where("id = ?", opt.ID)
-			}
-
-			return d
-		},
-		func(d *gorm.DB) *gorm.DB {
-			if len(opt.Email) != 0 {
-				return d.Where("email = ?", opt.Email)
-			}
-
-			return d
-		},
-	}
-}
-
-func (repo *userRepository) Delete(ctx context.Context, opt repository.GetUserOption) error {
-	err := repo.db.WithContext(ctx).Table(model.User{}.TableName()).
-		Scopes(repo.getUserOptionScope(opt)...).
-		Delete(&model.User{}).Error
+func (repo *userRepository) Delete(ctx context.Context, userID int64) error {
+	err := repo.db.DeleteUser(ctx, userID)
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
+		if conn.IsNotFoundError(err) {
 			return nil
 		}
 

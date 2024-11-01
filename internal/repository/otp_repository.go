@@ -48,3 +48,12 @@ func (repo *otpRepository) Get(ctx context.Context, email string) (string, error
 
 	return code, nil
 }
+
+func (repo *otpRepository) Delete(ctx context.Context, email string) error {
+	_, err := repo.rdb.Del(ctx, repo.cacheKey(email)).Result()
+	if err != nil {
+		return errors.Errorf("delete otp, err: %+v", err)
+	}
+
+	return nil
+}

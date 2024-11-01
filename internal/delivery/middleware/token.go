@@ -10,7 +10,6 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/labstack/echo/v4"
-	"github.com/yanun0323/pkg/logs"
 )
 
 const (
@@ -42,9 +41,6 @@ func Token(tokenUsecase usecase.TokenUsecase) echo.MiddlewareFunc {
 			}
 
 			clientDeviceID := payload.GetDeviceID(c.Request())
-
-			logs.Debugf("client device id: %s", clientDeviceID)
-			logs.Debugf("%+v", claims)
 
 			if !strings.EqualFold(claims.DeviceID, clientDeviceID) {
 				return c.JSON(http.StatusUnauthorized, response.MsgErr("invalid token provided", "mismatch deviceID, client: %s, token: %s", clientDeviceID, claims.DeviceID))

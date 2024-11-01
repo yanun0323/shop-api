@@ -31,6 +31,7 @@ type PageDataResponse struct {
 
 func Msg(message string) Response {
 	return Response{
+		Code:    usecase.ErrNil.Code,
 		Message: message,
 	}
 }

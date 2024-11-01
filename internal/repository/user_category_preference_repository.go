@@ -7,22 +7,22 @@ import (
 	"main/config"
 	"main/internal/domain/entity"
 	"main/internal/domain/repository"
-	"main/internal/repository/model"
+	"main/internal/repository/conn"
+	"main/internal/repository/query"
 	"time"
 
 	"github.com/pkg/errors"
 	"github.com/redis/go-redis/v9"
-	"gorm.io/gorm"
 )
 
 type userCategoryPreferenceRepository struct {
-	db  *gorm.DB
+	db  *query.Queries
 	rdb *redis.Client
 
 	recommendationExpiration time.Duration
 }
 
-func NewUserCategoryPreferenceRepository(conf config.Config, db *gorm.DB, rdb *redis.Client) repository.UserCategoryPreferenceRepository {
+func NewUserCategoryPreferenceRepository(conf config.Config, db *query.Queries, rdb *redis.Client) repository.UserCategoryPreferenceRepository {
 	return &userCategoryPreferenceRepository{
 		db:                       db,
 		rdb:                      rdb,
@@ -41,7 +41,7 @@ func (repo *userCategoryPreferenceRepository) Get(ctx context.Context, userID in
 		return entity.ProductCategory(result), nil
 	}
 
-	if !errors.Is(err, redis.Nil) {
+	if !conn.IsNotFoundError(err) {
 		return 0, errors.Errorf("get redis key (%s), err: %+v", key, err)
 	}
 
@@ -59,18 +59,14 @@ func (repo *userCategoryPreferenceRepository) Get(ctx context.Context, userID in
 }
 
 func (repo *userCategoryPreferenceRepository) getFromMySQL(ctx context.Context, userID int64) (entity.ProductCategory, error) {
-	var ucp *model.UserCategoryPreference
-
-	if err := repo.db.WithContext(ctx).Table(model.UserCategoryPreference{}.TableName()).
-		Where("user_id = ?", userID).
-		Take(&ucp).
-		Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
+	id, err := repo.db.GetUserCategoryPreferenceByUserID(ctx, userID)
+	if err != nil {
+		if conn.IsNotFoundError(err) {
 			return 1, nil
 		}
 
 		return 0, errors.Errorf("get user category preference, err: %+v", err)
 	}
 
-	return ucp.CategoryID, nil
+	return entity.ProductCategory(id), nil
 }
