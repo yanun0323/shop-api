@@ -1,8 +1,26 @@
 package pager
 
+const (
+	_defaultPage     = 1
+	_defaultPageSize = 20
+)
+
 type Request struct {
 	Page     int `json:"page"`
 	PageSize int `json:"page_size"`
+}
+
+func New(page, pageSize int) Request {
+	if page <= 0 {
+		page = _defaultPage
+	}
+	if pageSize <= 0 {
+		pageSize = _defaultPageSize
+	}
+	return Request{
+		Page:     page,
+		PageSize: pageSize,
+	}
 }
 
 func (req Request) Offset() int {
