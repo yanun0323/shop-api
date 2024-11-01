@@ -114,6 +114,7 @@ func (ctr *AuthController) VerifyOTP(c echo.Context) error {
 		)
 	}
 
+	// TODO: provide verify type inside token
 	return c.JSON(
 		http.StatusOK,
 		response.Msg("verify otp success"),

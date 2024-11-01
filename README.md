@@ -2,6 +2,8 @@
 
 A simple shop platform backend project. base on clean architecture.
 
+- code style follow [the uber go style](https://github.com/uber-go/guide/blob/master/style.md)
+
 ## Requirement
 
 - _GO 1.22 or later_
@@ -33,7 +35,7 @@ $ cp Makefile.env.example Makefile.env
 
 ```
 
-#### Start MySQL and Redis (Optional)
+### Start MySQL and Redis (Optional)
 
 ```bash
 # install dependencies (macOS required)
