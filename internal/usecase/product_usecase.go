@@ -31,8 +31,7 @@ func (use *productUsecase) ListUserRecommended(ctx context.Context, userID int64
 		return nil, nil, errors.Errorf("get user category preference, err: %+v", err)
 	}
 
-	products, count, err := use.productRepo.GetUserRanked(ctx, repository.GetUserRankedQuery{
-		UserID:   userID,
+	products, count, err := use.productRepo.ListRankedProductsByCategory(ctx, repository.ListRankedProductsByCategoryQuery{
 		Category: categoryID,
 		Offset:   pagination.Offset(),
 		Limit:    pagination.Limit(),

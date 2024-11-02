@@ -32,7 +32,7 @@ func NewProductRepository(conf config.Config, db *conn.Dao, rdb *redis.Client) r
 	}
 }
 
-func (repo *productRepository) GetUserRanked(ctx context.Context, query repository.GetUserRankedQuery) ([]*entity.Product, int64, error) {
+func (repo *productRepository) ListRankedProductsByCategory(ctx context.Context, query repository.ListRankedProductsByCategoryQuery) ([]*entity.Product, int64, error) {
 	result, count, err := repo.getCategoryProductList(ctx, query.Category, query.Offset, query.Limit)
 	if err != nil {
 		return nil, 0, errors.Errorf("get product list, err: %+v", err)

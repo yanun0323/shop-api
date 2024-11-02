@@ -7,11 +7,10 @@ import (
 
 //go:generate domaingen -destination=../../repository/product_repository.go -package=repository -constructor
 type ProductRepository interface {
-	GetUserRanked(ctx context.Context, query GetUserRankedQuery) ([]*entity.Product, int64, error)
+	ListRankedProductsByCategory(ctx context.Context, query ListRankedProductsByCategoryQuery) ([]*entity.Product, int64, error)
 }
 
-type GetUserRankedQuery struct {
-	UserID   int64
+type ListRankedProductsByCategoryQuery struct {
 	Category entity.ProductCategory
 	Offset   int
 	Limit    int

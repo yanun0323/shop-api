@@ -14,6 +14,8 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
+const _defaultUserCategory entity.ProductCategory = 1
+
 type userCategoryPreferenceRepository struct {
 	db  *conn.Dao
 	rdb *redis.Client
@@ -61,7 +63,7 @@ func (repo *userCategoryPreferenceRepository) getFromMySQL(ctx context.Context, 
 	id, err := repo.db.GetUserCategoryPreferenceByUserID(ctx, userID)
 	if err != nil {
 		if conn.IsNotFoundError(err) {
-			return 1, nil
+			return _defaultUserCategory, nil
 		}
 
 		return 0, errors.Errorf("get user category preference, err: %+v", err)
