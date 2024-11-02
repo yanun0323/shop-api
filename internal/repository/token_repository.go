@@ -15,11 +15,11 @@ import (
 )
 
 type tokenRepository struct {
-	db  *query.Queries
+	db  *conn.Dao
 	rdb *redis.Client
 }
 
-func NewTokenRepository(db *query.Queries, rdb *redis.Client) repository.TokenRepository {
+func NewTokenRepository(db *conn.Dao, rdb *redis.Client) repository.TokenRepository {
 	return &tokenRepository{
 		db:  db,
 		rdb: rdb,

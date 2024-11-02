@@ -12,10 +12,10 @@ import (
 )
 
 type userRepository struct {
-	db *query.Queries
+	db *conn.Dao
 }
 
-func NewUserRepository(db *query.Queries) repository.UserRepository {
+func NewUserRepository(db *conn.Dao) repository.UserRepository {
 	return &userRepository{
 		db: db,
 	}

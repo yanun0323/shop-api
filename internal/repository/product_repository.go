@@ -7,7 +7,6 @@ import (
 	"main/internal/domain/entity"
 	"main/internal/domain/repository"
 	"main/internal/repository/conn"
-	"main/internal/repository/query"
 	"sync"
 	"time"
 
@@ -17,14 +16,14 @@ import (
 )
 
 type productRepository struct {
-	db  *query.Queries
+	db  *conn.Dao
 	rdb *redis.Client
 
 	recommendationExpiration       time.Duration
 	categoryProductCacheMutexTable sync.Map
 }
 
-func NewProductRepository(conf config.Config, db *query.Queries, rdb *redis.Client) repository.ProductRepository {
+func NewProductRepository(conf config.Config, db *conn.Dao, rdb *redis.Client) repository.ProductRepository {
 	return &productRepository{
 		db:                             db,
 		rdb:                            rdb,

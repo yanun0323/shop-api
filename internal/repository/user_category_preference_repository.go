@@ -8,7 +8,6 @@ import (
 	"main/internal/domain/entity"
 	"main/internal/domain/repository"
 	"main/internal/repository/conn"
-	"main/internal/repository/query"
 	"time"
 
 	"github.com/pkg/errors"
@@ -16,13 +15,13 @@ import (
 )
 
 type userCategoryPreferenceRepository struct {
-	db  *query.Queries
+	db  *conn.Dao
 	rdb *redis.Client
 
 	recommendationExpiration time.Duration
 }
 
-func NewUserCategoryPreferenceRepository(conf config.Config, db *query.Queries, rdb *redis.Client) repository.UserCategoryPreferenceRepository {
+func NewUserCategoryPreferenceRepository(conf config.Config, db *conn.Dao, rdb *redis.Client) repository.UserCategoryPreferenceRepository {
 	return &userCategoryPreferenceRepository{
 		db:                       db,
 		rdb:                      rdb,
