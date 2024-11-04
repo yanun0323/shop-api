@@ -88,7 +88,27 @@ $ make database.up
 
 ## API
 
-**check [API.md](./API.md) for more details**
+Running on port `8080` by default
+
+**check [API.md](./API.md) for the API documentation**
+
+## Database Migration
+
+#### Create migration file
+
+Create a new migration file in the `./database/migration` directory.
+Then run `make migrate.up` to apply the migration after editing the file.
+
+```base
+# create a new migration file
+$ make migrate.new
+
+# apply the migration
+$ make migrate.up
+
+# rollback the migration
+$ make migrate.down
+```
 
 ## Folder Structure
 
