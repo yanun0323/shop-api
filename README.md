@@ -94,8 +94,6 @@ Running on port `8080` by default
 
 ## Database Migration
 
-#### Create migration file
-
 Create a new migration file in the `./database/migration` directory.
 Then run `make migrate.up` to apply the migration after editing the file.
 
