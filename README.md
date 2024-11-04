@@ -1,6 +1,6 @@
 # Shop API
 
-A simple shop platform backend project. base on clean architecture.
+A basic shop backend following clean architecture.
 
 - Going with [The uber go style guide](https://github.com/uber-go/guide/blob/master/style.md)
 
