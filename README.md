@@ -2,7 +2,7 @@
 
 A simple shop platform backend project. base on clean architecture.
 
-- code style follow [the uber go style](https://github.com/uber-go/guide/blob/master/style.md)
+- Going with [The uber go style guide](https://github.com/uber-go/guide/blob/master/style.md)
 
 ## Requirement
 
